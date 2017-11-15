@@ -27,6 +27,11 @@
         android:layout_above="@id/btn_start"
         android:text="@string/finish_activity"/>
 
+    <CheckBox
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/My_CheckBox"/>
+
     <ScrollView
         android:layout_above="@id/btn_finish"
         android:layout_width="match_parent"
