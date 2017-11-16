@@ -662,7 +662,7 @@ public class ViewDragHelper {
                                 && tryCaptureViewForDrag(toCapture, pointerId)) {
                             break;
                         }
-                    }
+                    } 
                     saveLastMotion(ev);
                 }
                 break;
