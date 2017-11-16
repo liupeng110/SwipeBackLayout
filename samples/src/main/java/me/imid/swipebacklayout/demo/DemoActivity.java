@@ -21,7 +21,7 @@ import me.imid.swipebacklayout.lib.app.SwipeBackActivity;
  * Created by Issac on 8/11/13.
  */
 public class DemoActivity extends SwipeBackActivity implements View.OnClickListener {
-    private static final int VIBRATE_DURATION = 20;
+    private static final int VIBRATE_DURATION = 0;
 
     private int[] mBgColors;
 
@@ -59,7 +59,8 @@ public class DemoActivity extends SwipeBackActivity implements View.OnClickListe
                         edgeFlag = SwipeBackLayout.EDGE_BOTTOM;
                         break;
                     default:
-                        edgeFlag = SwipeBackLayout.EDGE_ALL;
+//                        edgeFlag = SwipeBackLayout.EDGE_ALL;
+                        edgeFlag = SwipeBackLayout.EDGE_TOP;
                 }
                 mSwipeBackLayout.setEdgeTrackingEnabled(edgeFlag);
                 saveTrackingMode(edgeFlag);

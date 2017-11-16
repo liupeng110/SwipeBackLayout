@@ -6,6 +6,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 
+import me.imid.swipebacklayout.lib.L;
 import me.imid.swipebacklayout.lib.SwipeBackLayout;
 import me.imid.swipebacklayout.lib.Utils;
 
@@ -39,7 +40,7 @@ public class SwipeBackActivityHelper {
 
             @Override
             public void onScrollOverThreshold() {
-
+                L.i("进入onScrollOverThreshold");
             }
         });
     }

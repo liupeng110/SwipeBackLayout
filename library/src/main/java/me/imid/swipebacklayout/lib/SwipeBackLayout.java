@@ -17,114 +17,51 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SwipeBackLayout extends FrameLayout {
-    /**
-     * Minimum velocity that will be detected as a fling
-     */
-    private static final int MIN_FLING_VELOCITY = 400; // dips per second
 
-    private static final int DEFAULT_SCRIM_COLOR = 0x99000000;
-
+    private static final int MIN_FLING_VELOCITY = 400; // 最小的速度 作为一个投掷检测  像素/秒
+    private static final int DEFAULT_SCRIM_COLOR = 0x99000000;//纱幕 颜色？
     private static final int FULL_ALPHA = 255;
 
-    /**
-     * Edge flag indicating that the left edge should be affected.
-     */
-    public static final int EDGE_LEFT = ViewDragHelper.EDGE_LEFT;
-
-    /**
-     * Edge flag indicating that the right edge should be affected.
-     */
+    public static final int EDGE_LEFT = ViewDragHelper.EDGE_LEFT;     //左边
     public static final int EDGE_RIGHT = ViewDragHelper.EDGE_RIGHT;
-
-    /**
-     * Edge flag indicating that the bottom edge should be affected.
-     */
     public static final int EDGE_BOTTOM = ViewDragHelper.EDGE_BOTTOM;
-
-    /**
-     * Edge flag set indicating all edges should be affected.
-     */
+    public static final int EDGE_TOP =ViewDragHelper.EDGE_TOP;
     public static final int EDGE_ALL = EDGE_LEFT | EDGE_RIGHT | EDGE_BOTTOM;
-
-    /**
-     * A view is not currently being dragged or animating as a result of a
-     * fling/snap.
-     */
-    public static final int STATE_IDLE = ViewDragHelper.STATE_IDLE;
-
-    /**
-     * A view is currently being dragged. The position is currently changing as
-     * a result of user input or simulated user input.
-     */
-    public static final int STATE_DRAGGING = ViewDragHelper.STATE_DRAGGING;
-
-    /**
-     * A view is currently settling into place as a result of a fling or
-     * predefined non-interactive motion.
-     */
-    public static final int STATE_SETTLING = ViewDragHelper.STATE_SETTLING;
-
-    /**
-     * Default threshold of scroll
-     */
-    private static final float DEFAULT_SCROLL_THRESHOLD = 0.3f;
-
-    private static final int OVERSCROLL_DISTANCE = 10;
-
-    private static final int[] EDGE_FLAGS = {
-            EDGE_LEFT, EDGE_RIGHT, EDGE_BOTTOM, EDGE_ALL
-    };
-
+    private static final int[] EDGE_FLAGS = { EDGE_LEFT, EDGE_RIGHT, EDGE_BOTTOM, EDGE_ALL,EDGE_TOP  };
     private int mEdgeFlag;
 
-    /**
-     * Threshold of scroll, we will close the activity, when scrollPercent over
-     * this value;
-     */
-    private float mScrollThreshold = DEFAULT_SCROLL_THRESHOLD;
+    public static final int STATE_IDLE = ViewDragHelper.STATE_IDLE;//一个视图目前没有被拖动或动画作为一个结果/捕捉的结果。
+    public static final int STATE_DRAGGING = ViewDragHelper.STATE_DRAGGING;//被拖动状态
+    public static final int STATE_SETTLING = ViewDragHelper.STATE_SETTLING;//当前视图是由于一次性或预定义的非交互式运动而导致的。
+    private static final float DEFAULT_SCROLL_THRESHOLD = 0.3f;//滚动的默认阈值
+    private static final int OVERSCROLL_DISTANCE = 10;//反弹时距离
 
+    private float mScrollThreshold = DEFAULT_SCROLL_THRESHOLD;//滚动的阈值，我们将关闭活动，当scrollPercent超过这个值;
     private Activity mActivity;
+    private View mContentView;
+    private ViewDragHelper mDragHelper;
+    private float mScrollPercent;
+    private int mContentLeft;
+    private int mContentTop;
+    private List<SwipeListener> mListeners;//要通过发送事件的听众的集合。
+
+
+    private Drawable mShadowLeft;              //各个阴影
+    private Drawable mShadowRight;
+    private Drawable mShadowBottom;
+    private Drawable mShadowTop;
 
     private boolean mEnable = true;
-
-    private View mContentView;
-
-    private ViewDragHelper mDragHelper;
-
-    private float mScrollPercent;
-
-    private int mContentLeft;
-
-    private int mContentTop;
-
-    /**
-     * The set of listeners to be sent events through.
-     */
-    private List<SwipeListener> mListeners;
-
-    private Drawable mShadowLeft;
-
-    private Drawable mShadowRight;
-
-    private Drawable mShadowBottom;
-
-    private float mScrimOpacity;
-
+    private int mTrackingEdge;//边缘被拖动
+    private float mScrimOpacity;//不透明度
     private int mScrimColor = DEFAULT_SCRIM_COLOR;
-
     private boolean mInLayout;
-
     private Rect mTmpRect = new Rect();
 
-    /**
-     * Edge being dragged
-     */
-    private int mTrackingEdge;
 
     public SwipeBackLayout(Context context) {
         this(context, null);
     }
-
     public SwipeBackLayout(Context context, AttributeSet attrs) {
         this(context, attrs, R.attr.SwipeBackLayoutStyle);
     }
@@ -133,182 +70,74 @@ public class SwipeBackLayout extends FrameLayout {
         super(context, attrs);
         mDragHelper = ViewDragHelper.create(this, new ViewDragCallback());
 
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SwipeBackLayout, defStyle,
-                R.style.SwipeBackLayout);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SwipeBackLayout, defStyle,R.style.SwipeBackLayout);
 
-        int edgeSize = a.getDimensionPixelSize(R.styleable.SwipeBackLayout_edge_size, -1);
-        if (edgeSize > 0)
-            setEdgeSize(edgeSize);
-        int mode = EDGE_FLAGS[a.getInt(R.styleable.SwipeBackLayout_edge_flag, 0)];
+        int edgeSize = typedArray.getDimensionPixelSize(R.styleable.SwipeBackLayout_edge_size, -1);
+        if (edgeSize > 0) setEdgeSize(edgeSize);
+        int mode = EDGE_FLAGS[typedArray.getInt(R.styleable.SwipeBackLayout_edge_flag, 0)];
         setEdgeTrackingEnabled(mode);
 
-        int shadowLeft = a.getResourceId(R.styleable.SwipeBackLayout_shadow_left,
-                R.drawable.shadow_left);
-        int shadowRight = a.getResourceId(R.styleable.SwipeBackLayout_shadow_right,
-                R.drawable.shadow_right);
-        int shadowBottom = a.getResourceId(R.styleable.SwipeBackLayout_shadow_bottom,
-                R.drawable.shadow_bottom);
+        int shadowLeft = typedArray.getResourceId(R.styleable.SwipeBackLayout_shadow_left,R.drawable.shadow_left);
+        int shadowRight = typedArray.getResourceId(R.styleable.SwipeBackLayout_shadow_right, R.drawable.shadow_right);
+        int shadowBottom = typedArray.getResourceId(R.styleable.SwipeBackLayout_shadow_bottom,R.drawable.shadow_bottom);
         setShadow(shadowLeft, EDGE_LEFT);
         setShadow(shadowRight, EDGE_RIGHT);
         setShadow(shadowBottom, EDGE_BOTTOM);
-        a.recycle();
+        typedArray.recycle();
         final float density = getResources().getDisplayMetrics().density;
         final float minVel = MIN_FLING_VELOCITY * density;
         mDragHelper.setMinVelocity(minVel);
         mDragHelper.setMaxVelocity(minVel * 2f);
     }
 
-    /**
-     * Sets the sensitivity of the NavigationLayout.
-     *
-     * @param context     The application context.
-     * @param sensitivity value between 0 and 1, the final value for touchSlop =
-     *                    ViewConfiguration.getScaledTouchSlop * (1 / s);
-     */
     public void setSensitivity(Context context, float sensitivity) {
         mDragHelper.setSensitivity(context, sensitivity);
-    }
-
-    /**
-     * Set up contentView which will be moved by user gesture
-     *
-     * @param view
-     */
+    }//设置边缘拖动灵敏度  0-1之间
     private void setContentView(View view) {
         mContentView = view;
-    }
-
+    }//设置将通过用户手势移动的contentView
     public void setEnableGesture(boolean enable) {
         mEnable = enable;
-    }
-
-    /**
-     * Enable edge tracking for the selected edges of the parent view. The
-     * callback's
-     * {@link me.imid.swipebacklayout.lib.ViewDragHelper.Callback#onEdgeTouched(int, int)}
-     * and
-     * {@link me.imid.swipebacklayout.lib.ViewDragHelper.Callback#onEdgeDragStarted(int, int)}
-     * methods will only be invoked for edges for which edge tracking has been
-     * enabled.
-     *
-     * @param edgeFlags Combination of edge flags describing the edges to watch
-     * @see #EDGE_LEFT
-     * @see #EDGE_RIGHT
-     * @see #EDGE_BOTTOM
-     */
+    }//设置是否可以拖动
     public void setEdgeTrackingEnabled(int edgeFlags) {
         mEdgeFlag = edgeFlags;
         mDragHelper.setEdgeTrackingEnabled(mEdgeFlag);
-    }
-
-    /**
-     * Set a color to use for the scrim that obscures primary content while a
-     * drawer is open.
-     *
-     * @param color Color to use in 0xAARRGGBB format.
-     */
+    }//启用父视图的选定边的边缘跟踪  参数 左上右下
     public void setScrimColor(int color) {
         mScrimColor = color;
         invalidate();
-    }
-
-    /**
-     * Set the size of an edge. This is the range in pixels along the edges of
-     * this view that will actively detect edge touches or drags if edge
-     * tracking is enabled.
-     *
-     * @param size The size of an edge in pixels
-     */
+    }//设置用于在抽屉打开时遮挡主要内容的稀松布的颜色。  颜色以0xAARRGGBB格式使用。
     public void setEdgeSize(int size) {
         mDragHelper.setEdgeSize(size);
-    }
-
-    /**
-     * Register a callback to be invoked when a swipe event is sent to this
-     * view.
-     *
-     * @param listener the swipe listener to attach to this view
-     * @deprecated use {@link #addSwipeListener} instead
-     */
-    @Deprecated
-    public void setSwipeListener(SwipeListener listener) {
+    }//设置边缘大小
+    @Deprecated public void setSwipeListener(SwipeListener listener) {
         addSwipeListener(listener);
-    }
-
-    /**
-     * Add a callback to be invoked when a swipe event is sent to this view.
-     *
-     * @param listener the swipe listener to attach to this view
-     */
+    }//将滑动事件发送到此视图时，注册要调用的回调。
     public void addSwipeListener(SwipeListener listener) {
         if (mListeners == null) {
             mListeners = new ArrayList<SwipeListener>();
         }
         mListeners.add(listener);
-    }
-
-    /**
-     * Removes a listener from the set of listeners
-     *
-     * @param listener
-     */
+    }//在向此视图发送滑动事件时添加要调用的回调。
     public void removeSwipeListener(SwipeListener listener) {
         if (mListeners == null) {
             return;
         }
         mListeners.remove(listener);
+    }//从一组侦听器中移除一个侦听器
+
+    public interface SwipeListener {
+          void onScrollStateChange(int state, float scrollPercent);//当状态改变时调用，state 标志来描述滚动状态 ，scrollper滚动这个视图的百分比
+          void onEdgeTouch(int edgeFlag);//触摸边缘时调用  左上右下
+          void onScrollOverThreshold();//当第一次滚动百分比超过阈值时调用
     }
 
-    public static interface SwipeListener {
-        /**
-         * Invoke when state change
-         *
-         * @param state         flag to describe scroll state
-         * @param scrollPercent scroll percent of this view
-         * @see #STATE_IDLE
-         * @see #STATE_DRAGGING
-         * @see #STATE_SETTLING
-         */
-        public void onScrollStateChange(int state, float scrollPercent);
-
-        /**
-         * Invoke when edge touched
-         *
-         * @param edgeFlag edge flag describing the edge being touched
-         * @see #EDGE_LEFT
-         * @see #EDGE_RIGHT
-         * @see #EDGE_BOTTOM
-         */
-        public void onEdgeTouch(int edgeFlag);
-
-        /**
-         * Invoke when scroll percent over the threshold for the first time
-         */
-        public void onScrollOverThreshold();
-    }
-
-    /**
-     * Set scroll threshold, we will close the activity, when scrollPercent over
-     * this value
-     *
-     * @param threshold
-     */
     public void setScrollThresHold(float threshold) {
         if (threshold >= 1.0f || threshold <= 0) {
             throw new IllegalArgumentException("Threshold value should be between 0 and 1.0");
         }
         mScrollThreshold = threshold;
-    }
-
-    /**
-     * Set a drawable used for edge shadow.
-     *
-     * @param shadow    Drawable to use
-     * @param edgeFlags Combination of edge flags describing the edge to set
-     * @see #EDGE_LEFT
-     * @see #EDGE_RIGHT
-     * @see #EDGE_BOTTOM
-     */
+    }//设置滚动阈值，当滚动百分比超过此值时 将关闭
     public void setShadow(Drawable shadow, int edgeFlag) {
         if ((edgeFlag & EDGE_LEFT) != 0) {
             mShadowLeft = shadow;
@@ -316,26 +145,15 @@ public class SwipeBackLayout extends FrameLayout {
             mShadowRight = shadow;
         } else if ((edgeFlag & EDGE_BOTTOM) != 0) {
             mShadowBottom = shadow;
+        }else if ((edgeFlag & EDGE_TOP) != 0) {
+            mShadowTop = shadow;
         }
-        invalidate();
-    }
 
-    /**
-     * Set a drawable used for edge shadow.
-     *
-     * @param resId     Resource of drawable to use
-     * @param edgeFlags Combination of edge flags describing the edge to set
-     * @see #EDGE_LEFT
-     * @see #EDGE_RIGHT
-     * @see #EDGE_BOTTOM
-     */
+        invalidate();
+    }//设置用于边缘阴影的drawable。
     public void setShadow(int resId, int edgeFlag) {
         setShadow(getResources().getDrawable(resId), edgeFlag);
     }
-
-    /**
-     * Scroll out contentView and finish the activity
-     */
     public void scrollToFinishActivity() {
         final int childWidth = mContentView.getWidth();
         final int childHeight = mContentView.getHeight();
@@ -350,64 +168,55 @@ public class SwipeBackLayout extends FrameLayout {
         } else if ((mEdgeFlag & EDGE_BOTTOM) != 0) {
             top = -childHeight - mShadowBottom.getIntrinsicHeight() - OVERSCROLL_DISTANCE;
             mTrackingEdge = EDGE_BOTTOM;
+        }else if ((mEdgeFlag & EDGE_TOP) != 0) {
+            top = -childHeight - mShadowTop.getIntrinsicHeight() - OVERSCROLL_DISTANCE;
+            mTrackingEdge = EDGE_TOP;
         }
 
         mDragHelper.smoothSlideViewTo(mContentView, left, top);
         invalidate();
-    }
+    }//滚动contentView并完成活动
 
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent event) {
-        if (!mEnable) {
-            return false;
-        }
+
+
+    @Override public boolean onInterceptTouchEvent(MotionEvent event) {
+        L.i("viewgroup事件分发:-------  onInterceptTouchEvent  ");
+        if (!mEnable) { return false; }//如果不允许拖动直接交给上层处理
         try {
-            return mDragHelper.shouldInterceptTouchEvent(event);
+            return mDragHelper.shouldInterceptTouchEvent(event);//判断是否需要进行处理
         } catch (ArrayIndexOutOfBoundsException e) {
-            // FIXME: handle exception
-            // issues #9
+            e.printStackTrace();
             return false;
         }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (!mEnable) {
-            return false;
-        }
-        mDragHelper.processTouchEvent(event);
+    } //viewgroup层拦截 事件
+    @Override public boolean onTouchEvent(MotionEvent event) {
+        L.i("viewgroup事件分发:-------  onTouchEvent  ");
+        if (!mEnable) { return false; }
+        mDragHelper.processTouchEvent(event);//分发给具体处理者
         return true;
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+    } //如果onInterceptTouchEvent为true则进入这里进行处理
+    @Override protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         mInLayout = true;
         if (mContentView != null)
             mContentView.layout(mContentLeft, mContentTop,
                     mContentLeft + mContentView.getMeasuredWidth(),
                     mContentTop + mContentView.getMeasuredHeight());
         mInLayout = false;
-    }
-
-    @Override
-    public void requestLayout() {
+    }//布局，参数 左上右下
+    @Override public void requestLayout() {
         if (!mInLayout) {
             super.requestLayout();
         }
-    }
-
-    @Override
-    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+    } //请求framework重新测量 布局 绘制
+    @Override protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         final boolean drawContent = child == mContentView;
-
         boolean ret = super.drawChild(canvas, child, drawingTime);
-        if (mScrimOpacity > 0 && drawContent
-                && mDragHelper.getViewDragState() != ViewDragHelper.STATE_IDLE) {
-            drawShadow(canvas, child);
-            drawScrim(canvas, child);
+        if (mScrimOpacity > 0 && drawContent&& mDragHelper.getViewDragState() != ViewDragHelper.STATE_IDLE) {
+//            drawShadow(canvas, child);//注释去阴影
+//            drawScrim(canvas, child);   //纱罩也去掉
         }
         return ret;
-    }
+    }      //绘制子view
 
     private void drawScrim(Canvas canvas, View child) {
         final int baseAlpha = (mScrimColor & 0xff000000) >>> 24;
@@ -422,65 +231,67 @@ public class SwipeBackLayout extends FrameLayout {
             canvas.clipRect(child.getLeft(), child.getBottom(), getRight(), getHeight());
         }
         canvas.drawColor(color);
-    }
-
+    }      //绘制纱罩
     private void drawShadow(Canvas canvas, View child) {
         final Rect childRect = mTmpRect;
-        child.getHitRect(childRect);
+        child.getHitRect(childRect);//获取View可点击矩形左、上、右、下边界相对于父View的左顶点的距离（偏移量）
 
-        if ((mEdgeFlag & EDGE_LEFT) != 0) {
-            mShadowLeft.setBounds(childRect.left - mShadowLeft.getIntrinsicWidth(), childRect.top,
-                    childRect.left, childRect.bottom);
+        if ((mEdgeFlag & EDGE_LEFT) != 0) {//阴影坐标的计算  左上右下
+            mShadowLeft.setBounds(childRect.left - mShadowLeft.getIntrinsicWidth(), childRect.top,childRect.left, childRect.bottom);
             mShadowLeft.setAlpha((int) (mScrimOpacity * FULL_ALPHA));
             mShadowLeft.draw(canvas);
         }
 
         if ((mEdgeFlag & EDGE_RIGHT) != 0) {
-            mShadowRight.setBounds(childRect.right, childRect.top,
-                    childRect.right + mShadowRight.getIntrinsicWidth(), childRect.bottom);
+            mShadowRight.setBounds(childRect.right, childRect.top, childRect.right + mShadowRight.getIntrinsicWidth(), childRect.bottom);
             mShadowRight.setAlpha((int) (mScrimOpacity * FULL_ALPHA));
             mShadowRight.draw(canvas);
         }
 
         if ((mEdgeFlag & EDGE_BOTTOM) != 0) {
-            mShadowBottom.setBounds(childRect.left, childRect.bottom, childRect.right,
-                    childRect.bottom + mShadowBottom.getIntrinsicHeight());
+            mShadowBottom.setBounds(childRect.left, childRect.bottom, childRect.right,childRect.bottom + mShadowBottom.getIntrinsicHeight());
             mShadowBottom.setAlpha((int) (mScrimOpacity * FULL_ALPHA));
             mShadowBottom.draw(canvas);
         }
-    }
+
+        if ((mEdgeFlag & EDGE_TOP) != 0) {
+            mShadowTop.setBounds(childRect.left, childRect.bottom, childRect.right, childRect.top + mShadowTop.getIntrinsicHeight());
+            mShadowTop.setAlpha((int) (mScrimOpacity * FULL_ALPHA));
+            mShadowTop.draw(canvas);
+        }
+    }  //绘制阴影
+
 
     public void attachToActivity(Activity activity) {
         mActivity = activity;
-        TypedArray a = activity.getTheme().obtainStyledAttributes(new int[]{
-                android.R.attr.windowBackground
-        });
-        int background = a.getResourceId(0, 0);
-        a.recycle();
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(new int[]{ android.R.attr.windowBackground  });
+        int background = typedArray.getResourceId(0, 0);
+        typedArray.recycle();
 
-        ViewGroup decor = (ViewGroup) activity.getWindow().getDecorView();
+        ViewGroup decor = (ViewGroup) activity.getWindow().getDecorView();//装饰
         ViewGroup decorChild = (ViewGroup) decor.getChildAt(0);
         decorChild.setBackgroundResource(background);
         decor.removeView(decorChild);
         addView(decorChild);
         setContentView(decorChild);
         decor.addView(this);
-    }
+    }//附加到activity
 
-    @Override
-    public void computeScroll() {
+     //http://www.linuxidc.com/Linux/2016-01/127276.htm
+    @Override public void computeScroll() {
+        L.i("计算滑动:-------  computeScroll  ");
         mScrimOpacity = 1 - mScrollPercent;
         if (mDragHelper.continueSettling(true)) {
             ViewCompat.postInvalidateOnAnimation(this);
         }
-    }
+    } //计算滑动
 
     private class ViewDragCallback extends ViewDragHelper.Callback {
-        private boolean mIsScrollOverValid;
-
-        @Override
-        public boolean tryCaptureView(View view, int i) {
-            boolean ret = mDragHelper.isEdgeTouched(mEdgeFlag, i);
+         private boolean mIsScrollOverValid;//滑动覆盖有效
+        //滑动之前 最先进入这里  滑不滑动都进入
+        @Override public boolean tryCaptureView(View view, int i) {
+            L.i("callback执行顺序:-------  tryCaptureView  ");
+            boolean ret = mDragHelper.isEdgeTouched(mEdgeFlag, i);//是否触摸到了边缘
             if (ret) {
                 if (mDragHelper.isEdgeTouched(EDGE_LEFT, i)) {
                     mTrackingEdge = EDGE_LEFT;
@@ -500,37 +311,38 @@ public class SwipeBackLayout extends FrameLayout {
             if (mEdgeFlag == EDGE_LEFT || mEdgeFlag == EDGE_RIGHT) {
                 directionCheck = !mDragHelper.checkTouchSlop(ViewDragHelper.DIRECTION_VERTICAL, i);
             } else if (mEdgeFlag == EDGE_BOTTOM) {
-                directionCheck = !mDragHelper
-                        .checkTouchSlop(ViewDragHelper.DIRECTION_HORIZONTAL, i);
+                directionCheck = !mDragHelper.checkTouchSlop(ViewDragHelper.DIRECTION_HORIZONTAL, i);
             } else if (mEdgeFlag == EDGE_ALL) {
                 directionCheck = true;
+            }else if (mEdgeFlag == EDGE_TOP){
+                directionCheck = !mDragHelper.checkTouchSlop(ViewDragHelper.DIRECTION_HORIZONTAL, i);
             }
             return ret & directionCheck;
         }
 
-        @Override
-        public int getViewHorizontalDragRange(View child) {
+        @Override  public int getViewHorizontalDragRange(View child) {
+            L.i("callback执行顺序:-------  getViewHorizontalDragRange  ");
             return mEdgeFlag & (EDGE_LEFT | EDGE_RIGHT);
         }
 
-        @Override
-        public int getViewVerticalDragRange(View child) {
+        @Override public int getViewVerticalDragRange(View child) {
+            L.i("callback执行顺序:-------  getViewVerticalDragRange  ");
             return mEdgeFlag & EDGE_BOTTOM;
         }
 
-        @Override
-        public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
+        @Override public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
             super.onViewPositionChanged(changedView, left, top, dx, dy);
+            L.i("callback执行顺序:-------  onViewPositionChanged  ");
             if ((mTrackingEdge & EDGE_LEFT) != 0) {
-                mScrollPercent = Math.abs((float) left
-                        / (mContentView.getWidth() + mShadowLeft.getIntrinsicWidth()));
+                mScrollPercent = Math.abs((float) left/ (mContentView.getWidth() + mShadowLeft.getIntrinsicWidth()));
             } else if ((mTrackingEdge & EDGE_RIGHT) != 0) {
-                mScrollPercent = Math.abs((float) left
-                        / (mContentView.getWidth() + mShadowRight.getIntrinsicWidth()));
+                mScrollPercent = Math.abs((float) left/ (mContentView.getWidth() + mShadowRight.getIntrinsicWidth()));
             } else if ((mTrackingEdge & EDGE_BOTTOM) != 0) {
-                mScrollPercent = Math.abs((float) top
-                        / (mContentView.getHeight() + mShadowBottom.getIntrinsicHeight()));
+                mScrollPercent = Math.abs((float) top/ (mContentView.getHeight() + mShadowBottom.getIntrinsicHeight()));
+            } else if ((mTrackingEdge & EDGE_TOP) != 0) {
+                mScrollPercent = Math.abs((float) top/ (mContentView.getHeight() + mShadowTop.getIntrinsicHeight()));
             }
+
             mContentLeft = left;
             mContentTop = top;
             invalidate();
@@ -554,8 +366,8 @@ public class SwipeBackLayout extends FrameLayout {
             }
         }
 
-        @Override
-        public void onViewReleased(View releasedChild, float xvel, float yvel) {
+        @Override  public void onViewReleased(View releasedChild, float xvel, float yvel) {
+            L.i("callback执行顺序:-------  onViewReleased  ");
             final int childWidth = releasedChild.getWidth();
             final int childHeight = releasedChild.getHeight();
 
@@ -569,14 +381,17 @@ public class SwipeBackLayout extends FrameLayout {
             } else if ((mTrackingEdge & EDGE_BOTTOM) != 0) {
                 top = yvel < 0 || yvel == 0 && mScrollPercent > mScrollThreshold ? -(childHeight
                         + mShadowBottom.getIntrinsicHeight() + OVERSCROLL_DISTANCE) : 0;
+            }else if ((mTrackingEdge & EDGE_TOP) != 0) {
+                top = yvel < 0 || yvel == 0 && mScrollPercent > mScrollThreshold ? -(childHeight
+                        + mShadowTop.getIntrinsicHeight() + OVERSCROLL_DISTANCE) : 0;
             }
 
             mDragHelper.settleCapturedViewAt(left, top);
             invalidate();
         }
 
-        @Override
-        public int clampViewPositionHorizontal(View child, int left, int dx) {
+        @Override public int clampViewPositionHorizontal(View child, int left, int dx) {
+            L.i("callback执行顺序:-------  clampViewPositionHorizontal  ");
             int ret = 0;
             if ((mTrackingEdge & EDGE_LEFT) != 0) {
                 ret = Math.min(child.getWidth(), Math.max(left, 0));
@@ -586,23 +401,26 @@ public class SwipeBackLayout extends FrameLayout {
             return ret;
         }
 
-        @Override
-        public int clampViewPositionVertical(View child, int top, int dy) {
+        @Override public int clampViewPositionVertical(View child, int top, int dy) {
+            L.i("callback执行顺序:-------  clampViewPositionVertical  ");
             int ret = 0;
             if ((mTrackingEdge & EDGE_BOTTOM) != 0) {
                 ret = Math.min(0, Math.max(top, -child.getHeight()));
+            }else  if ((mTrackingEdge & EDGE_TOP) != 0) {
+                ret = Math.min(0, Math.max(top, 0));
             }
             return ret;
         }
 
-        @Override
-        public void onViewDragStateChanged(int state) {
+        @Override public void onViewDragStateChanged(int state) {
+            L.i("callback执行顺序:-------  onViewDragStateChanged  ");
             super.onViewDragStateChanged(state);
             if (mListeners != null && !mListeners.isEmpty()) {
                 for (SwipeListener listener : mListeners) {
                     listener.onScrollStateChange(state, mScrollPercent);
-                }
-            }
-        }
-    }
+                }//for
+            }//if
+        }//函数结束
+    }//callback结束
+
 }
