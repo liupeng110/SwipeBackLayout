@@ -72,7 +72,7 @@ public class DemoActivity extends SwipeBackActivity implements View.OnClickListe
         isTopActivity(this);
     }
 
-
+//需要依赖activity栈 
     private boolean isTopActivity(Activity activity)
     {
         Log.i("top","当前："+activity.getClass().getSimpleName());
