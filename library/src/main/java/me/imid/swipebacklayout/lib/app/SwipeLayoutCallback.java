@@ -2,7 +2,7 @@ package me.imid.swipebacklayout.lib.app;
 
 import me.imid.swipebacklayout.lib.SwipeBackLayout;
 
-public interface SwipeBackActivityBase {
+public interface SwipeLayoutCallback {
     
     public abstract SwipeBackLayout getSwipeBackLayout();//返回与此活动关联的SwipeBackLayout
     public abstract void setSwipeBackEnable(boolean enable);

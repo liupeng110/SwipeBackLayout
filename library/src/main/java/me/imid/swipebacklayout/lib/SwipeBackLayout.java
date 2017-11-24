@@ -33,7 +33,7 @@ public class SwipeBackLayout extends FrameLayout {
     public static final int STATE_IDLE = ViewDragHelper.STATE_IDLE;//一个视图目前没有被拖动或动画作为一个结果/捕捉的结果。
     public static final int STATE_DRAGGING = ViewDragHelper.STATE_DRAGGING;//被拖动状态
     public static final int STATE_SETTLING = ViewDragHelper.STATE_SETTLING;//当前视图是由于一次性或预定义的非交互式运动而导致的。
-    private static final float DEFAULT_SCROLL_THRESHOLD = 0.3f;//滚动的默认阈值
+    private static final float DEFAULT_SCROLL_THRESHOLD = 0.65f;//滚动的默认阈值
     private static final int OVERSCROLL_DISTANCE = 10;//反弹时距离
 
     private float mScrollThreshold = DEFAULT_SCROLL_THRESHOLD;//滚动的阈值，我们将关闭活动，当scrollPercent超过这个值;
@@ -106,7 +106,8 @@ public class SwipeBackLayout extends FrameLayout {
     public void setScrimColor(int color) {
         mScrimColor = color;
         invalidate();
-    }//设置用于在抽屉打开时遮挡主要内容的稀松布的颜色。  颜色以0xAARRGGBB格式使用。
+    }//设置用于在抽屉打开时遮挡主要内容的稀松布的颜色。  颜色以0xA
+    // RRGGBB格式使用。
     public void setEdgeSize(int size) {
         mDragHelper.setEdgeSize(size);
     }//设置边缘大小

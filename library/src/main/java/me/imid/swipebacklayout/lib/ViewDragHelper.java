@@ -45,7 +45,7 @@ public class ViewDragHelper {
     public static final int DIRECTION_HORIZONTAL = 1 << 0;//水平轴进行
     public static final int DIRECTION_VERTICAL = 1 << 1;//垂直轴
     public static final int DIRECTION_ALL = DIRECTION_HORIZONTAL | DIRECTION_VERTICAL;//所有轴检查
-    public static final int EDGE_SIZE = 2;                             //边缘尺寸dp
+    public static final int EDGE_SIZE = 50;                             //边缘尺寸dp
     private static final int BASE_SETTLE_DURATION = 256; // 动画持续时间ms
     private static final int MAX_SETTLE_DURATION = 600; //
     private int mDragState;//当前拖动状态; 闲置，拖拉或沉降
@@ -219,8 +219,7 @@ public class ViewDragHelper {
     }//返回false 停止   否则一直执行动画 到 左上
     public boolean settleCapturedViewAt(int finalLeft, int finalTop) {
         if (!mReleaseInProgress) {
-            throw new IllegalStateException("Cannot settleCapturedViewAt outside of a call to "
-                    + "Callback#onViewReleased");
+            throw new IllegalStateException("Cannot settleCapturedViewAt outside of a call to " + "Callback#onViewReleased");
         }
         return forceSettleCapturedViewAt(finalLeft, finalTop,
                 (int) VelocityTrackerCompat.getXVelocity(mVelocityTracker, mActivePointerId),
@@ -662,7 +661,7 @@ public class ViewDragHelper {
                                 && tryCaptureViewForDrag(toCapture, pointerId)) {
                             break;
                         }
-                    } 
+                    }
                     saveLastMotion(ev);
                 }
                 break;
