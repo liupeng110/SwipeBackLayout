@@ -17,7 +17,7 @@ import android.view.View;
 import java.lang.reflect.Method;
 import me.imid.swipebacklayout.lib.SwipeBackLayout;
 
-public class SwipeBackActivity extends AppCompatActivity implements SwipeLayoutCallback {
+public class SwipeBackActivity extends AppCompatActivity{//implements SwipeLayoutCallback {
     private SwipeBackLayout mSwipeBackLayout;
     public final String tag ="swip";
 
@@ -35,9 +35,9 @@ public class SwipeBackActivity extends AppCompatActivity implements SwipeLayoutC
         mSwipeBackLayout.attachToActivity(this);
     }
 
-    public View findViewById(int id) {
-         return mSwipeBackLayout.findViewById(id);
-    }
+//    public View findViewById(int id) {
+//         return mSwipeBackLayout.findViewById(id);
+//    }
     public SwipeBackLayout getSwipeBackLayout() {
         return mSwipeBackLayout;
     }

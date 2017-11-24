@@ -1,6 +1,9 @@
 
 package me.imid.swipebacklayout.demo;
 
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -8,6 +11,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.RadioGroup;
 
@@ -65,10 +69,20 @@ public class DemoActivity extends SwipeBackActivity implements View.OnClickListe
                 vibrate(VIBRATE_DURATION);
             }
         });
+        isTopActivity(this);
     }
 
 
-
+    private boolean isTopActivity(Activity activity)
+    {
+        Log.i("top","当前："+activity.getClass().getSimpleName());
+        ActivityManager am = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
+        ComponentName cn = am.getRunningTasks(1).get(0).topActivity;
+        Log.i("top","最上层："+cn.getClassName());
+        Log.i("top","最上层0："+cn.getShortClassName());
+        Log.i("top","最上层1："+cn.getPackageName());
+        return cn.getClassName().contains(activity.getClass().getSimpleName());
+    }
 
     private void changeActionBarColor() {
         getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getColors()[mBgIndex]));
