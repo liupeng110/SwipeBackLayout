@@ -60,19 +60,19 @@ public class DemoActivity extends SwipeBackActivity implements View.OnClickListe
             }
         });
 
-        mSwipeBackLayout.addSwipeListener(new SwipeBackLayout.SwipeListener() {
-            @Override public void onScrollStateChange(int state, float scrollPercent) { }
-            @Override public void onEdgeTouch(int edgeFlag) {
-                vibrate(VIBRATE_DURATION);
-            }
-            @Override public void onScrollOverThreshold() {
-                vibrate(VIBRATE_DURATION);
-            }
-        });
+//        mSwipeBackLayout.addSwipeListener(new SwipeBackLayout.SwipeListener() {
+//            @Override public void onScrollStateChange(int state, float scrollPercent) { }
+//            @Override public void onEdgeTouch(int edgeFlag) {
+//                vibrate(VIBRATE_DURATION);
+//            }
+//            @Override public void onScrollOverThreshold() {
+//                vibrate(VIBRATE_DURATION);
+//            }
+//        });
         isTopActivity(this);
     }
 
-//需要依赖activity栈 
+//需要依赖activity栈
     private boolean isTopActivity(Activity activity)
     {
         Log.i("top","当前："+activity.getClass().getSimpleName());
@@ -96,7 +96,7 @@ public class DemoActivity extends SwipeBackActivity implements View.OnClickListe
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
         findViewById(R.id.btn_start).setOnClickListener(this);
         findViewById(R.id.btn_finish).setOnClickListener(this);
-        mRadioGroup = (RadioGroup) findViewById(R.id.tracking_mode);
+        mRadioGroup = findViewById(R.id.tracking_mode);
     }
 
     private int[] getColors() {
@@ -119,7 +119,7 @@ public class DemoActivity extends SwipeBackActivity implements View.OnClickListe
                 0, duration
         };
         vibrator.vibrate(pattern, -1);
-    }
+    }//震动
 
     @Override  public void onClick(View v) {
         switch (v.getId()) {
